@@ -1,0 +1,132 @@
+#!/bin/sh
+
+set -eu
+
+readonly SCRIPT_NAME='alpine-make-oci'
+readonly BUILDAH='buildah'
+readonly TAR='tar'
+
+die() {
+    echo "$SCRIPT_NAME: error: $1"
+    exit 1
+}
+
+bad_args() {
+    die "Invalid arguments. Try, '$SCRIPT_NAME --help'."
+}
+
+usage() {
+    cat <<EOF
+Creates Alpine Linux OCI image. 
+
+Usage:
+    $SCRIPT_NAME [options] <destination> [ -- [flags] ]
+
+    $SCRIPT_NAME unshare [options] <destination> [ -- [flags] ]   
+                                    Runs within a modified user namespace
+                                    allowing the script to run unelevated. (see
+                                    buildah-unshare(1)).
+
+Options:
+    -h, --help                      Show this message then exit.
+
+Flags: 
+    Arguments to be forwarded to "buildah config" (see buildah-config(1)).
+
+EOF
+    return 0
+}
+
+cleanup() {
+    set +eu
+    trap '' EXIT HUP INT TERM
+
+    if [ ! -z "$container_id" ]; then
+        $BUILDAH rm $container_id &>/dev/null
+    fi
+
+    if [ ! -z "$image_id" ]; then
+        $BUILDAH rmi $image_id &>/dev/null
+    fi
+
+    if [ -d "$temp_dir" ]; then
+        rm -rf $temp_dir
+    fi
+}
+
+#== main ==#
+
+# An argument is required.
+[ $# -gt 0 ] || {
+    bad_args
+}
+
+# Check if we should re-run this script using cgroup isolation.
+if [ "$1" = "unshare" ]; then
+    shift
+    $BUILDAH unshare -- $0 $@
+    exit
+fi
+
+# Parse arguments.
+if ! OPTS=$(getopt -n $SCRIPT_NAME -o h -l help -- "$@"); then
+    exit 1
+fi
+eval set -- "$OPTS"
+while :; do
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+done
+
+# Check for required commands.
+for cmd in "$BUILDAH" "$TAR"; do
+    if ! command -V "$cmd" >/dev/null 2>&1; then
+        die "$cmd command missing."
+    fi
+done
+
+# Get the destination path.
+if [ $# -gt 0 ]; then
+    destination=$1
+    shift
+else
+    bad_args
+fi
+
+# Catch all exit signals.
+trap cleanup EXIT HUP INT TERM
+
+# Initialize an empty container instance.
+container_id=$($BUILDAH from scratch |
+    xargs $BUILDAH inspect |
+    grep 'ContainerID' |
+    sed -e 's/^ *"ContainerID": \"//' -e 's/\", *$//')
+
+# Create a mount point so that we can write into the container.
+mount_point=$($BUILDAH mount $container_id)
+
+# Create the root file system.
+./alpine-make-rootfs --branch v3.8 -- $mount_point
+
+# Unmount the container.
+$BUILDAH umount $container_id &>/dev/null
+
+# Configure the container if specified.
+if [ $# -gt 0 ]; then
+    echo "config $@ $container_id" | xargs $BUILDAH
+fi
+
+# Save the container as an image into the local repository.
+image_id=$($BUILDAH commit $container_id $SCRIPT_NAME-temp)
+
+# Write the OCI bundle.
+temp_dir=$(mktemp -d)
+$BUILDAH push $image_id oci:"$temp_dir"/layer
+
+# Compress the bundle.
+$TAR -czf $destination "$temp_dir"/layer
