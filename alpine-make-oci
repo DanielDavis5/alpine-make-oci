@@ -5,6 +5,7 @@ set -eu
 readonly SCRIPT_NAME='alpine-make-oci'
 readonly BUILDAH='buildah'
 readonly TAR='tar'
+readonly ALPINE_MAKE_ROOTFS='alpine-make-rootfs'
 
 die() {
     echo "$SCRIPT_NAME: error: $1"
@@ -84,7 +85,7 @@ while :; do
 done
 
 # Check for required commands.
-for cmd in "$BUILDAH" "$TAR"; do
+for cmd in "$BUILDAH" "$TAR" $ALPINE_MAKE_ROOTFS; do
     if ! command -V "$cmd" >/dev/null 2>&1; then
         die "$cmd command missing."
     fi
@@ -111,7 +112,7 @@ container_id=$($BUILDAH from scratch |
 mount_point=$($BUILDAH mount $container_id)
 
 # Create the root file system.
-./alpine-make-rootfs --branch v3.8 -- $mount_point
+$ALPINE_MAKE_ROOTFS --branch v3.8 -- $mount_point
 
 # Unmount the container.
 $BUILDAH umount $container_id &>/dev/null
