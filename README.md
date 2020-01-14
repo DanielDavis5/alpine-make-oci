@@ -4,6 +4,16 @@
 
 Creates Alpine Linux [OCI Image](https://github.com/opencontainers/image-spec).
 
+## Dependencies
+
+### Build
+
+[meson](https://github.com/mesonbuild/meson)
+
+### Run-Time
+
+[alpine-make-rootfs](https://github.com/DanielDavis5/alpine-make-rootfs)
+
 ## Installation
 
 ```
