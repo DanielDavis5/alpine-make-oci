@@ -6,8 +6,10 @@ Creates Alpine Linux [OCI Image](https://github.com/opencontainers/image-spec).
 
 ## Installation
 
+```
 meson build
 ninja -C build install
+```
 
 ## Help
 
