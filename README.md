@@ -1,34 +1,45 @@
-# alpine-make-oci
+# Description
 
-## Description
+Creates [OCI compliant](https://github.com/opencontainers/image-spec) Alpine Linux container image.
 
-Creates Alpine Linux [OCI Image](https://github.com/opencontainers/image-spec).
+# Usage
 
-## Dependencies
+## Normal
 
-### Build
+    alpine-make-oci [options] [ -- [config_flags] ]
 
-[meson](https://github.com/mesonbuild/meson)
+## Rootless
 
-### Run-Time
+    alpine-make-oci unshare [options] [ -- [config_flags] ]
 
-[alpine-make-rootfs](https://github.com/DanielDavis5/alpine-make-rootfs)
+## Options
 
-## Installation
+    -h, --help                      Show this message then exit.
+    -k, --keep                      Keep image in the local repository.
+    -n, --name=<name>               Generated image name.
+    -o, --output=<path>             Save a compressed OCI bundle at the specified location.
 
-```
-meson build
-ninja -C build install
-```
+## Config Flags
 
-## Help
+Arguments to pass to buildah-config; see [buildah-config(1)](https://github.com/containers/buildah/blob/master/docs/buildah-config.md).
 
-    ./alpine-make-oci --help
+# Installation
 
-## Run without root
+## [Arch User Repositiory](https://aur.archlinux.org/)
 
-    ./alpine-make-oci unshare [options] <destination> [ -- [flags] ]
+    yay -S alpine-make-oci
 
-## Flags
+## From Source
 
-Arguments to be forwarded to [buildah-config](https://github.com/containers/buildah/blob/master/docs/buildah-config.md).
+### Install dependencies
+
+* [Buildah](https://github.com/containers/buildah) ***(run-time)***
+
+* [alpine-make-rootfs](https://github.com/alpinelinux/alpine-make-rootfs) ***(run-time)***
+
+* [meson](https://github.com/mesonbuild/meson) ***(build)***
+
+### Install the script
+
+    meson build
+    sudo ninja -C build install
