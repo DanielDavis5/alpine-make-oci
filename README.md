@@ -1,34 +1,76 @@
-# alpine-make-oci
+# Description
 
-## Description
+Creates an [OCI compliant](https://github.com/opencontainers/image-spec) Alpine Linux container image.
 
-Creates Alpine Linux [OCI Image](https://github.com/opencontainers/image-spec).
+# Usage
 
-## Dependencies
+## Normal
 
-### Build
+    alpine-make-oci [options] [ -- [config_flags] ]
 
-[meson](https://github.com/mesonbuild/meson)
+## Rootless
 
-### Run-Time
+    alpine-make-oci unshare [options] [ -- [config_flags] ]
 
-[alpine-make-rootfs](https://github.com/DanielDavis5/alpine-make-rootfs)
+## Options
 
-## Installation
+    -h, --help                      Show help message then exits.
+    -k, --keep                      Keep image in the local repository.
+    -n, --name=<name>               Generated image name.
+    -o, --output=<path>             Save a compressed OCI bundle at the specified location.
 
-```
-meson build
-ninja -C build install
-```
+## Config Flags
 
-## Help
+Arguments to pass to buildah-config; see [buildah-config(1)](https://github.com/containers/buildah/blob/master/docs/buildah-config.md).
 
-    ./alpine-make-oci --help
+## Example
 
-## Run without root
+### Generate an archived oci bundle in the current directory
+    
+    $ sudo alpine-make-oci -o example.1.img
 
-    ./alpine-make-oci unshare [options] <destination> [ -- [flags] ]
+### Same thing, only without root
+    
+    $ alpine-make-oci unshare -o example.2.img
 
-## Flags
+### Add an image to the local repo that prints the contents of the root directory
+    
+    $ alpine-make-oci unshare -k -n showdir -- --cmd ls
 
-Arguments to be forwarded to [buildah-config](https://github.com/containers/buildah/blob/master/docs/buildah-config.md).
+#### run container output
+    
+    $ podman run showdir
+    bin
+    dev
+    etc
+    lib
+    proc
+    root
+    run
+    sbin
+    sys
+    tmp
+    usr
+    var
+
+
+# Installation
+
+## [Arch User Repositiory](https://aur.archlinux.org/)
+
+    yay -S alpine-make-oci
+
+## From Source
+
+### Install dependencies
+
+* [Buildah](https://github.com/containers/buildah) ***(run-time)***
+
+* [alpine-make-rootfs](https://github.com/alpinelinux/alpine-make-rootfs) ***(run-time)***
+
+* [meson](https://github.com/mesonbuild/meson) ***(build)***
+
+### Install the script
+
+    meson build
+    sudo ninja -C build install
