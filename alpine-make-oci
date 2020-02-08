@@ -63,13 +63,13 @@ done
 # Check if we should re-run this script using cgroup isolation.
 if [ $# -gt 0 ] && [ "$1" = "unshare" ]; then
     shift
-    $BUILDAH unshare -- $0 $@
+    $BUILDAH unshare -- "$0" "$*"
     exit
 fi
 
 # Pull out the buildah args.
-buildah_args=$(echo $@ | awk -F"-- " '{ print $2 }')
-eval set -- $(echo $@ | awk -F"-- " '{ print $1 }')
+buildah_args=$(echo "$*" | awk -F"-- " '{ print $2 }')
+eval set -- $(echo "$*" | awk -F"-- " '{ print $1 }')
 
 # Parse the arguments.
 if ! OPTS=$(getopt -n $SCRIPT_NAME -o hko:n: -l help,keep,output:,name: -- "$@"); then
