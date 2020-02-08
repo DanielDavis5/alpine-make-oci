@@ -1,8 +1,13 @@
-project('alpine-make-oci')
+project(
+    'alpine-make-oci', 
+    license : 'MIT',
+    version: '0.1.0'
+)
+
+find_program('buildah')
+find_program('alpine-make-rootfs')
 
 prefix = get_option('prefix')
-
-find_program('alpine-make-rootfs')
 
 configure_file(
     input: 'alpine-make-oci',
