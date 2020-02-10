@@ -1,7 +1,7 @@
 project(
     'alpine-make-oci', 
     license : 'MIT',
-    version: '0.1.0'
+    version: '0.2.0'
 )
 
 find_program('buildah')
