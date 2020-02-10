@@ -17,7 +17,9 @@ Usage:
                                     Run the script rootless.
 
 Options:
+    -b, --branch=<version>          Specify the Alpine branch to install.
     -h, --help                      Show this message then exit.
+    -p, --package                   Additional package to install.
     -k, --keep                      Keep image in the local repository.
     -n, --name=<name>               Generated image name.
     -o, --output=<path>             Save a compressed OCI bundle at the specified location.
@@ -72,15 +74,24 @@ buildah_args=$(echo "$*" | awk -F"-- " '{ print $2 }')
 eval set -- $(echo "$*" | awk -F"-- " '{ print $1 }')
 
 # Parse the arguments.
-if ! OPTS=$(getopt -n $SCRIPT_NAME -o hko:n: -l help,keep,output:,name: -- "$@"); then
+if ! OPTS=$(getopt -n $SCRIPT_NAME -o b:hp:ko:n: -l branch:,help,package:,keep,output:,name: -- "$@"); then
     exit 1
 fi
 eval set -- "$OPTS"
+
 while :; do
     case "$1" in
+    -b | --branch)
+        mkroot_args="${make_rootfs_args:-}-b $2 "
+        shift 2
+        ;;
     -h | --help)
         usage
         exit 0
+        ;;
+    -p | --packages)
+        mkroot_args="${make_rootfs_args:-}-p $2 "
+        shift 2
         ;;
     -k | --keep)
         keep='yes'
@@ -112,6 +123,12 @@ fi
 : ${keep:='no'}
 : ${write_file:='no'}
 : ${image_name:=''}
+: ${mkroot_args:=''}
+
+if [ "$mkroot_args" != '' ]; then
+    mkroot_args="$mkroot_args-- "
+fi
+
 container_id=''
 image_id=''
 
@@ -128,7 +145,7 @@ container_id=$($BUILDAH from scratch |
 mount_point=$($BUILDAH mount $container_id)
 
 # Create the root file system.
-$ALPINE_MAKE_ROOTFS --branch v3.8 -- $mount_point
+echo "${mkroot_args}${mount_point}" | xargs -t $ALPINE_MAKE_ROOTFS
 
 # Unmount the container.
 $BUILDAH umount $container_id &>/dev/null

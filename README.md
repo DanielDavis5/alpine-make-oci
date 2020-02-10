@@ -14,7 +14,9 @@ Creates an [OCI compliant](https://github.com/opencontainers/image-spec) Alpine 
 
 ## Options
 
-    -h, --help                      Show help message then exits.
+    -b, --branch=<version>          Specify the Alpine branch to install.
+    -h, --help                      Show this message then exit.
+    -p, --package                   Additional package to install.
     -k, --keep                      Keep image in the local repository.
     -n, --name=<name>               Generated image name.
     -o, --output=<path>             Save a compressed OCI bundle at the specified location.
@@ -26,19 +28,19 @@ Arguments to pass to buildah-config; see [buildah-config(1)](https://github.com/
 ## Example
 
 ### Generate an archived oci bundle in the current directory
-    
+
     $ sudo alpine-make-oci -o example.1.img
 
 ### Same thing, only without root
-    
+
     $ alpine-make-oci unshare -o example.2.img
 
 ### Add an image to the local repo that prints the contents of the root directory
-    
+
     $ alpine-make-oci unshare -k -n showdir -- --cmd ls
 
 #### run container output
-    
+
     $ podman run showdir
     bin
     dev
